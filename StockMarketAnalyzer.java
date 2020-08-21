@@ -1,3 +1,15 @@
+/***
+ * Creator: Kylan Thomson
+ * Date: 08/21/2020
+ * 
+ * Description: This program allows the user to create a Stock Market
+ * watch list. The program scrapes data for every stock on the watch 
+ * list and provides descriptive/inferential statistics.
+ * 
+ * Version 1.01: More accurately adds stocks to the watch list
+ * 
+ */
+
 package StockAnalyzer;
 
 import java.io.BufferedReader;
@@ -41,9 +53,16 @@ public class StockMarketAnalyzer {
     public static ArrayList<Integer> mapWatchList(ArrayList<String> watchList, ArrayList<String> stockTicker, ArrayList<String> securityName) throws IOException {
         ArrayList<Integer> mappedWatchList = new ArrayList<Integer>();
         for(int i = 0; i < watchList.size(); i++){
+            int count = 1;
             for(int j = 0; j < stockTicker.size(); j++){
                 if(stockTicker.get(j).toUpperCase().contains(watchList.get(i)) || securityName.get(j).toUpperCase().contains(watchList.get(i))){
-                    mappedWatchList.add(j);
+                    if(count > 1 && securityName.get(mappedWatchList.get(mappedWatchList.size() - 1)).length() > securityName.get(j).length()) {
+                        mappedWatchList.set(mappedWatchList.size() - 1, j);
+                    }
+                    if(count < 2) {
+                        mappedWatchList.add(j);
+                        count++;
+                    }
                 }
             }
         }
@@ -132,4 +151,7 @@ public class StockMarketAnalyzer {
         return stockPrice;
     }
 }
-
+/**********
+ * sentiment analysis:
+ * https://som.yale.edu/faculty-research-centers/centers-initiatives/international-center-for-finance/data/stock-market-confidence-indices/united-states-stock-market-confidence-indices
+ */
