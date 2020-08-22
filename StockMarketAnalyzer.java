@@ -1,13 +1,13 @@
 /***
  * Creator: Kylan Thomson
  * Date: 08/21/2020
- * 
+ *
  * Description: This program allows the user to create a Stock Market
- * watch list. The program scrapes data for every stock on the watch 
+ * watch list. The program scrapes data for every stock on the watch
  * list and provides descriptive/inferential statistics.
- * 
+ *
  * Version 1.01: More accurately adds stocks to the watch list
- * 
+ *
  */
 
 package StockAnalyzer;
@@ -20,13 +20,17 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class StockMarketAnalyzer {
+public class Main {
 
     public static void main(String[] args) throws IOException {
         ArrayList<String> watchList = getWatchList();
         ArrayList<String> stockTicker = getStockTicker();
         ArrayList<String> securityName = getSecurityName();
         ArrayList<Integer> mappedWatchList = mapWatchList(watchList, stockTicker, securityName);
+
+        ArrayList<Double> amazon = getPriceHistory("AMZN");
+        System.out.println((amazon.size()) / 5 + " days of data");
+
         for(int i = 0; i < mappedWatchList.size(); i ++){
             System.out.println("The current stock price for " + securityName.get(mappedWatchList.get(i)) + " (" + stockTicker.get(mappedWatchList.get(i)) + ") is " + getStockPrice(stockTicker.get(mappedWatchList.get(i))));
         }
@@ -149,6 +153,81 @@ public class StockMarketAnalyzer {
             line = buff.readLine();
         }
         return stockPrice;
+    }
+
+    /***
+     * @param stockSYM
+     * @return
+     * @throws IOException
+     *
+     * Returns an array list of historical stock market data
+     * from the last 100 days.
+     *
+     * Every fifth element is the adj. close price
+     * Every (5 - 1) element is the close* price
+     * Every (5 - 2) element is the low price
+     * Every (5 - 3) element is the high price
+     * Every (5 - 4) element is the open price
+     * 
+     */
+
+    public static ArrayList<Double> getPriceHistory(String stockSYM) throws IOException {
+
+        double stockPrice = -1.0;
+        ArrayList<Double> priceHistory = new ArrayList<Double>();
+
+
+        URL stockDataURL = new URL("https://finance.yahoo.com/quote/" + stockSYM + "/history/");
+        URLConnection urlConn = stockDataURL.openConnection();
+        urlConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+        urlConn.connect();
+        InputStreamReader inStream = new InputStreamReader(urlConn.getInputStream());
+        BufferedReader buff = new BufferedReader(inStream);
+
+        String line = buff.readLine();
+        String price = "not found";
+
+        while (line != null) {
+
+            if (line.contains("</span></td><td class=\"Py(10px) Pstart(10px)\" data-reactid=\"")) {
+                int target = line.indexOf("</span></td><td class=\"Py(10px) Pstart(10px)\" data-reactid=\"");
+                int deci = line.indexOf(".", target);
+                int start = deci;
+                while (line.charAt(start) != '>') {
+                    start--;
+                }
+                price = (line.substring((start + 1), deci + 3));
+                if (price.contains(",")) {
+                    price = price.replaceAll(",", "");
+                }
+                stockPrice = Double.parseDouble(price);
+                priceHistory.add(stockPrice);
+
+                boolean flag = true;
+                do {
+                    try {
+                        target = line.indexOf("</span></td><td class=\"Py(10px) Pstart(10px)\" data-reactid=\"", start);
+                        start = line.indexOf(".", target);
+                        while (line.charAt(start) != '>') {
+                            start--;
+                        }
+                        deci = line.indexOf(".", start);
+                        price = (line.substring((start + 1), deci + 3));
+                        if (price.contains(",")) {
+                            price = price.replaceAll(",", "");
+                        }
+                        //System.out.println("The price is: " + price);
+                        stockPrice = Double.parseDouble(price);
+                        priceHistory.add(stockPrice);
+                    } catch (Exception e) {
+                        flag = false;
+                    }
+                }
+                while(flag);
+            }
+            line = buff.readLine();
+        }
+        return priceHistory;
     }
 }
 /**********
