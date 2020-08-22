@@ -6,7 +6,8 @@
  * watch list. The program scrapes data for every stock on the watch
  * list and provides descriptive/inferential statistics.
  *
- * Version 1.01: More accurately adds stocks to the watch list
+ * Version 1.02: added the ability to scrape
+ * the last 100 days of stock market data
  *
  */
 
@@ -28,8 +29,9 @@ public class Main {
         ArrayList<String> securityName = getSecurityName();
         ArrayList<Integer> mappedWatchList = mapWatchList(watchList, stockTicker, securityName);
 
-        ArrayList<Double> amazon = getPriceHistory("AMZN");
-        System.out.println((amazon.size()) / 5 + " days of data");
+        ArrayList<Double> tesla = getPriceHistory("TSLA");
+        System.out.println(getOpenHistory(tesla));
+
 
         for(int i = 0; i < mappedWatchList.size(); i ++){
             System.out.println("The current stock price for " + securityName.get(mappedWatchList.get(i)) + " (" + stockTicker.get(mappedWatchList.get(i)) + ") is " + getStockPrice(stockTicker.get(mappedWatchList.get(i))));
@@ -168,7 +170,7 @@ public class Main {
      * Every (5 - 2) element is the low price
      * Every (5 - 3) element is the high price
      * Every (5 - 4) element is the open price
-     * 
+     *
      */
 
     public static ArrayList<Double> getPriceHistory(String stockSYM) throws IOException {
@@ -229,7 +231,47 @@ public class Main {
         }
         return priceHistory;
     }
+    public static ArrayList<Double> getOpenHistory(ArrayList<Double> priceHistory){
+        ArrayList<Double> openHistory = new ArrayList<Double>();
+        for(int i = 0; i < priceHistory.size(); i+=5){
+            openHistory.add(priceHistory.get(i));
+        }
+        return openHistory;
+    }
+
+    public static ArrayList<Double> getHighHistory(ArrayList<Double> priceHistory){
+        ArrayList<Double> highHistory = new ArrayList<Double>();
+        for(int i = 1; i < highHistory.size(); i+=5){
+            highHistory.add(priceHistory.get(i));
+        }
+        return highHistory;
+    }
+    public static ArrayList<Double> getLowHistory(ArrayList<Double> priceHistory){
+        ArrayList<Double> lowHistory = new ArrayList<Double>();
+        for(int i = 2; i < lowHistory.size(); i+=5){
+            lowHistory.add(priceHistory.get(i));
+        }
+        return lowHistory;
+    }
+
+    public static ArrayList<Double> getCloseHistory(ArrayList<Double> priceHistory){
+        ArrayList<Double> closeHistory = new ArrayList<Double>();
+        for(int i = 3; i < closeHistory.size(); i+=5){
+            closeHistory.add(priceHistory.get(i));
+        }
+        return closeHistory;
+    }
+
+    public static ArrayList<Double> getAdjCloseHistory(ArrayList<Double> priceHistory){
+        ArrayList<Double> adjCloseHistory = new ArrayList<Double>();
+        for(int i = 4; i < adjCloseHistory.size(); i+=5){
+            adjCloseHistory.add(priceHistory.get(i));
+        }
+        return adjCloseHistory;
+    }
+
 }
+
 /**********
  * sentiment analysis:
  * https://som.yale.edu/faculty-research-centers/centers-initiatives/international-center-for-finance/data/stock-market-confidence-indices/united-states-stock-market-confidence-indices
