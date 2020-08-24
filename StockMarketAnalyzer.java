@@ -1,6 +1,6 @@
 /***
  * Creator: Kylan Thomson
- * Date: 08/21/2020
+ * Last Modified: 08/21/2020
  *
  * Description: This program allows the user to create a Stock Market
  * watch list. The program scrapes data for every stock on the watch
@@ -29,12 +29,23 @@ public class Main {
         ArrayList<String> securityName = getSecurityName();
         ArrayList<Integer> mappedWatchList = mapWatchList(watchList, stockTicker, securityName);
 
-        ArrayList<Double> tesla = getPriceHistory("TSLA");
-        System.out.println(getOpenHistory(tesla));
-
-
         for(int i = 0; i < mappedWatchList.size(); i ++){
             System.out.println("The current stock price for " + securityName.get(mappedWatchList.get(i)) + " (" + stockTicker.get(mappedWatchList.get(i)) + ") is " + getStockPrice(stockTicker.get(mappedWatchList.get(i))));
+            ArrayList<Double> priceHistory = getPriceHistory(stockTicker.get(mappedWatchList.get(i)));
+            ArrayList<Double> linRegOpen = linReg(getOpenHistory(priceHistory));
+            ArrayList<Double> linRegHigh = linReg(getHighHistory(priceHistory));
+            ArrayList<Double> linRegLow = linReg(getLowHistory(priceHistory));
+            ArrayList<Double> linRegClose = linReg(getCloseHistory(priceHistory));
+            ArrayList<Double> adjClose = getAdjCloseHistory(priceHistory);
+            double openEst = 101.0 * linRegOpen.get(0) + linRegOpen.get(1);
+            double highEst = 101.0 * linRegHigh.get(0) + linRegHigh.get(1);
+            double lowEst = 101.0 * linRegLow.get(0) + linRegLow.get(1);
+            double closeEst = 101.0 * linRegClose.get(0) + linRegClose.get(1);
+
+            System.out.println("The estimated open price for " + stockTicker.get(mappedWatchList.get(i)) + " is " + openEst);
+            System.out.println("The estimated high for " + stockTicker.get(mappedWatchList.get(i)) + " is " + highEst);
+            System.out.println("The estimated low for " + stockTicker.get(mappedWatchList.get(i)) + " is " + lowEst);
+            System.out.println("The estimated close for " + stockTicker.get(mappedWatchList.get(i)) + " is " + closeEst);
         }
     }
 
@@ -218,7 +229,6 @@ public class Main {
                         if (price.contains(",")) {
                             price = price.replaceAll(",", "");
                         }
-                        //System.out.println("The price is: " + price);
                         stockPrice = Double.parseDouble(price);
                         priceHistory.add(stockPrice);
                     } catch (Exception e) {
@@ -241,14 +251,14 @@ public class Main {
 
     public static ArrayList<Double> getHighHistory(ArrayList<Double> priceHistory){
         ArrayList<Double> highHistory = new ArrayList<Double>();
-        for(int i = 1; i < highHistory.size(); i+=5){
+        for(int i = 1; i < priceHistory.size(); i+=5){
             highHistory.add(priceHistory.get(i));
         }
         return highHistory;
     }
     public static ArrayList<Double> getLowHistory(ArrayList<Double> priceHistory){
         ArrayList<Double> lowHistory = new ArrayList<Double>();
-        for(int i = 2; i < lowHistory.size(); i+=5){
+        for(int i = 2; i < priceHistory.size(); i+=5){
             lowHistory.add(priceHistory.get(i));
         }
         return lowHistory;
@@ -256,7 +266,7 @@ public class Main {
 
     public static ArrayList<Double> getCloseHistory(ArrayList<Double> priceHistory){
         ArrayList<Double> closeHistory = new ArrayList<Double>();
-        for(int i = 3; i < closeHistory.size(); i+=5){
+        for(int i = 3; i < priceHistory.size(); i += 5){
             closeHistory.add(priceHistory.get(i));
         }
         return closeHistory;
@@ -264,13 +274,54 @@ public class Main {
 
     public static ArrayList<Double> getAdjCloseHistory(ArrayList<Double> priceHistory){
         ArrayList<Double> adjCloseHistory = new ArrayList<Double>();
-        for(int i = 4; i < adjCloseHistory.size(); i+=5){
+        for(int i = 4; i < priceHistory.size(); i+=5){
             adjCloseHistory.add(priceHistory.get(i));
         }
         return adjCloseHistory;
     }
 
-}
+    public static ArrayList<Double> linReg(ArrayList<Double> data){
+
+        ArrayList<Double> linRegStats = new ArrayList<Double>();
+        double xSum = 0;
+        double ySum = 0;
+        int n = data.size();
+        double xAvg = 0;
+        double yAvg = 0;
+        double x_std_dev = 0;
+        double y_std_dev = 0;
+        double rNumerator = 0;
+        double r = 0;
+        double rSquare = 0;
+        double slope = 0;
+        double a = 0;
+
+        for(int i = 0; i < n; i++) {
+            xSum += i;
+            ySum += data.get(i);
+        }
+        xAvg = (xSum + n) / n;
+        yAvg = ySum / n;
+        for(int i = 1; i <= n; i++){
+            x_std_dev += Math.pow((((n+1) - i) - xAvg), 2);
+            y_std_dev += Math.pow((data.get(i - 1) - yAvg), 2);
+            rNumerator += ((((n + 1) - i) - xAvg) * (data.get(i - 1) - yAvg));
+        }
+        r = rNumerator / (Math.sqrt((x_std_dev * y_std_dev)));
+        rSquare = Math.pow(r, 2);
+        x_std_dev = Math.sqrt(x_std_dev / (n - 1));
+        y_std_dev = Math.sqrt(y_std_dev / (n -1));
+        slope = r * ((y_std_dev/x_std_dev));
+        a = yAvg - slope * xAvg;
+
+        linRegStats.add(slope);
+        linRegStats.add(a);
+
+        return linRegStats;
+        }
+    }
+
+
 
 /**********
  * sentiment analysis:
