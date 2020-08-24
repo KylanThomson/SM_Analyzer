@@ -30,22 +30,46 @@ public class Main {
         ArrayList<Integer> mappedWatchList = mapWatchList(watchList, stockTicker, securityName);
 
         for(int i = 0; i < mappedWatchList.size(); i ++){
-            System.out.println("The current stock price for " + securityName.get(mappedWatchList.get(i)) + " (" + stockTicker.get(mappedWatchList.get(i)) + ") is " + getStockPrice(stockTicker.get(mappedWatchList.get(i))));
+
+            String company = securityName.get(mappedWatchList.get(i));
+            String ticker = stockTicker.get(mappedWatchList.get(i));
+            double stockPrice = getStockPrice(stockTicker.get(mappedWatchList.get(i)));
             ArrayList<Double> priceHistory = getPriceHistory(stockTicker.get(mappedWatchList.get(i)));
             ArrayList<Double> linRegOpen = linReg(getOpenHistory(priceHistory));
             ArrayList<Double> linRegHigh = linReg(getHighHistory(priceHistory));
             ArrayList<Double> linRegLow = linReg(getLowHistory(priceHistory));
             ArrayList<Double> linRegClose = linReg(getCloseHistory(priceHistory));
-            ArrayList<Double> adjClose = getAdjCloseHistory(priceHistory);
-            double openEst = 101.0 * linRegOpen.get(0) + linRegOpen.get(1);
-            double highEst = 101.0 * linRegHigh.get(0) + linRegHigh.get(1);
-            double lowEst = 101.0 * linRegLow.get(0) + linRegLow.get(1);
-            double closeEst = 101.0 * linRegClose.get(0) + linRegClose.get(1);
 
-            System.out.println("The estimated open price for " + stockTicker.get(mappedWatchList.get(i)) + " is " + openEst);
-            System.out.println("The estimated high for " + stockTicker.get(mappedWatchList.get(i)) + " is " + highEst);
-            System.out.println("The estimated low for " + stockTicker.get(mappedWatchList.get(i)) + " is " + lowEst);
-            System.out.println("The estimated close for " + stockTicker.get(mappedWatchList.get(i)) + " is " + closeEst);
+            ArrayList<Double> recLinRegOpen = recLinReg(getOpenHistory(priceHistory));
+            ArrayList<Double> recLinRegHigh = recLinReg(getHighHistory(priceHistory));
+            ArrayList<Double> recLinRegLow = recLinReg(getLowHistory(priceHistory));
+            ArrayList<Double> recLinRegClose = recLinReg(getCloseHistory(priceHistory));
+
+            String openEst = String.format("%.02f", 101.0 * linRegOpen.get(0) + linRegOpen.get(1));
+            String highEst = String.format("%.02f", 101.0 * linRegHigh.get(0) + linRegHigh.get(1));
+            String lowEst = String.format("%.02f", 101.0 * linRegLow.get(0) + linRegLow.get(1));
+            String closeEst = String.format("%.02f", 101.0 * linRegClose.get(0) + linRegClose.get(1));
+
+            String recOpenEst = String.format("%.02f", 101.0 * recLinRegOpen.get(0) + recLinRegOpen.get(1));
+            String recHighEst = String.format("%.02f", 101.0 * recLinRegHigh.get(0) + recLinRegHigh.get(1));
+            String recLowEst = String.format("%.02f", 101.0 * recLinRegLow.get(0) + recLinRegLow.get(1));
+            String recCloseEst = String.format("%.02f", 101.0 * recLinRegClose.get(0) + recLinRegClose.get(1));
+
+            System.out.println("***********************************************************************************************");
+            System.out.println("");
+            System.out.println(company + " ( $" + stockPrice + ")");
+            System.out.println("");
+            System.out.println("Predicted open price for " + ticker + " is: $" + openEst);
+            System.out.println("Predicted high for " + ticker + " is: $" + highEst);
+            System.out.println("Predicted low for " + ticker + " is: $" + lowEst);
+            System.out.println("Predicted close for " + ticker + " is: $" + closeEst);
+            System.out.println("");
+            System.out.println("Predicted open price for " + ticker + " with recursive linear regression is: $" + recOpenEst);
+            System.out.println("Predicted high price for " + ticker + " with recursive linear regression is: $" + recHighEst);
+            System.out.println("Predicted low price for " + ticker + " with recursive linear regression is: $" + recLowEst);
+            System.out.println("Predicted close price for " + ticker + " with recursive linear regression is: $" + recCloseEst);
+            System.out.println("");
+            System.out.println("***********************************************************************************************");
         }
     }
 
@@ -318,6 +342,35 @@ public class Main {
         linRegStats.add(a);
 
         return linRegStats;
+        }
+
+        public static ArrayList<Double> recLinReg(ArrayList<Double> data){
+        ArrayList<Double> slope = new ArrayList<Double>();
+        double b = linReg(data).get(1);
+        //ArrayList<Double> a = new ArrayList<Double>();
+        ArrayList<Double> recursiveLinReg = new ArrayList<Double>();
+        double slopeSum = 0;
+        double aSum = 0;
+        double slopeAvg = 0;
+        //double aAvg = 0;
+        double threshold = data.size() * 0.04;
+
+        while(data.size() > threshold){
+                int lastElement = data.size() - 1;
+                data.remove(lastElement);
+                slope.add(linReg(data).get(0));
+                //a.add(linReg(data).get(1));
+                }
+        int n = slope.size();
+        for(int i = 0; i < n; i++){
+            slopeSum += slope.get(i);
+           // aSum += a.get(i);
+        }
+            slopeAvg = slopeSum / n;
+           // aAvg = aSum / n;
+            recursiveLinReg.add(slopeAvg);
+            recursiveLinReg.add(b);
+        return recursiveLinReg;
         }
     }
 
